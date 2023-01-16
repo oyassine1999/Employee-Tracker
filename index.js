@@ -43,11 +43,12 @@ async function main() {
       let results;
       switch (option) {
         case 'View all employees':
-    results = await connection.execute(`
+results = await connection.execute(`
     SELECT 
       employees.id,
       employees.first_name, 
       employees.last_name, 
+      managers.first_name as manager_first_name,
       roles.title,
       departments.name as department,
       roles.salary
@@ -61,6 +62,10 @@ async function main() {
       roles
     ON 
       employees.role_id = roles.id
+    JOIN
+      employees as managers
+    ON
+      employees.manager_id = managers.id
     `);
     console.table(results[0]);
     break;
