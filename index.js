@@ -2,6 +2,20 @@ import inquirer from 'inquirer';
 import consoleTable from 'console.table';
 import mysql2 from 'mysql2/promise';
 
+import figlet from 'figlet';
+
+console.log("\n");
+figlet('Employee Tracker', function(err, data) {
+    if (err) {
+        console.log('Something went wrong...');
+        console.dir(err);
+        return;
+    }
+    console.log(data)
+    
+});
+
+
 async function main() {
   // Create a connection
   const connection = await mysql2.createConnection({
