@@ -43,27 +43,27 @@ async function main() {
       let results;
       switch (option) {
         case 'View all employees':
-          results = await connection.execute(`
-            SELECT 
-              employees.id,
-              employees.first_name, 
-              employees.last_name, 
-              departments.name as department,
-              roles.title,
-              roles.salary
-            FROM 
-              employees 
-            LEFT JOIN 
-              departments 
-            ON 
-              employees.department_id = departments.id
-            LEFT JOIN
-              roles
-            ON 
-              employees.role_id = roles.id
-          `);
-          console.table(results[0]);
-          break;
+    results = await connection.execute(`
+    SELECT 
+      employees.id,
+      employees.first_name, 
+      employees.last_name, 
+      roles.title,
+      departments.name as department,
+      roles.salary
+    FROM 
+      employees 
+    LEFT JOIN 
+      departments 
+    ON 
+      employees.department_id = departments.id
+    LEFT JOIN
+      roles
+    ON 
+      employees.role_id = roles.id
+    `);
+    console.table(results[0]);
+    break;
         case 'View all roles':
           results = await connection.execute('SELECT * FROM roles');
           console.table(results[0]);
