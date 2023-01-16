@@ -16,11 +16,11 @@ async function main() {
     try {
       // Prompt user for the option they want to perform
       const { option } = await inquirer.prompt([
-        {
-          type: 'list',
-          name: 'option',
-          message: 'What would you like to do?',
-          choices: [
+    {
+        type: 'list',
+        name: 'option',
+        message: 'What would you like to do?',
+        choices: [
             'View all departments',
             'View all roles',
             'View all employees',
@@ -28,10 +28,11 @@ async function main() {
             'Add a role',
             'Add an employee',
             'Update an employee role',
+            'Assign an employee to a department',
             'Exit'
-          ]
-        }
-      ]);
+        ]
+    }
+]);
 
       if (option === 'Exit') {
         exit = true;console.log('Exiting...');
@@ -136,11 +137,11 @@ async function main() {
           console.log(`Employee ${first_name} ${last_name} added`);
           break;
         case 'Update an employee role':
-          // prompt user for the employee id and the new role id
-          const { employee_id, new_role_id } = await inquirer.prompt([
+          // prompt user for employee id and new role id
+          const { employee_id_upd, new_role_id } = await inquirer.prompt([
             {
               type: 'input',
-              name: 'employee_id',
+              name: 'employee_id_upd',
               message: 'Enter the employee id:'
             },
             {
@@ -149,16 +150,48 @@ async function main() {
               message: 'Enter the new role id:'
             }
           ]);
-          // update the employee's role
-          await connection.execute('UPDATE employees SET role_id = ? WHERE id = ?', [new_role_id, employee_id]);
-          console.log(`Employee's role updated`);
+          // update the employee's role in the employees table
+          await connection.execute('UPDATE employees SET role_id = ? WHERE id = ?', [new_role_id, employee_id_upd]);
+          console.log(`Employee ${employee_id_upd} role updated to ${new_role_id}`);
           break;
-        // ...
+          case 'Assign an employee to a department':
+          // Prompt user for employee id and department id
+          const { employee_id, department_id_assign } = await inquirer.prompt([
+            {
+              type: 'input',
+              name: 'employee_id',
+              message: 'Enter the employee id:'
+            },
+            {
+              type: 'input',
+              name: 'department_id_assign',
+              message: 'Enter the department id:'
+            }
+          ]);
+          // check if employee_id and department_id_assign are valid
+          const [employeeExist] = await connection.execute('SELECT * FROM employees WHERE id = ?', [employee_id]);
+          const [departmentExist] = await connection.execute('SELECT * FROM departments WHERE id = ?', [department_id_assign]);
+
+          if (employeeExist.length === 0) {
+            console.log('Invalid employee id');
+          } else if (departmentExist.length === 0) {
+            console.log('Invalid department id');
+          } else {
+            // update the employee's department in the employees table
+            await connection.execute('UPDATE employees SET department_id = ? WHERE id = ?', [department_id_assign, employee_id]);
+            console.log(`Employee ${employee_id} assigned to department ${department_id_assign}`);
+          }
+           break;
+        case 'Exit':
+          exit = true;
+          console.log('Exiting...');
+          break;
       }
     } catch (error) {
       console.log(error);
     }
   }
+
   // Close the connection
   connection.end();
 }
