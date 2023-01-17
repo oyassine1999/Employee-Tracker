@@ -1,8 +1,8 @@
 import inquirer from 'inquirer';
 import consoleTable from 'console.table';
 import mysql2 from 'mysql2/promise';
-
 import figlet from 'figlet';
+import updateSeed from './Assets/updateSeed.js';
 
 console.log("\n");
 figlet('Employee Tracker', function(err, data) {
@@ -12,36 +12,17 @@ figlet('Employee Tracker', function(err, data) {
         return;
     }
     console.log(data)
-    
 });
 
-
 async function main() {
-  let connection;
-  try {
-    connection = await mysql2.createConnection({
-      host: 'localhost',
-      user: 'root',
-      password: 'password',
-    });
-    // Check if the 'employee_tracker' database exists
-    const [results] = await connection.execute("SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = 'employee_tracker'");
-    if (!results.length) {
-      // If the database doesn't exist, create it
-      await connection.execute('CREATE DATABASE employee_tracker');
-      console.log('Database employee_tracker created');
-    }
-    // Connect to the 'employee_tracker' database
-    connection = await mysql2.createConnection({
-      host: 'localhost',
-      user: 'root',
-      password: 'password',
-      database: 'employee_tracker'
-    });
-  } catch (error) {
-    console.log("Error: ", error);
-    return;
-  }
+  // Create a connection
+  const connection = await mysql2.createConnection({
+    host: 'localhost',
+    user: 'root',
+    password: 'password',
+    database: 'employee_tracker'
+  });
+
   let exit = false;
   while (!exit) {
     try {
@@ -76,27 +57,27 @@ async function main() {
         case 'View all employees':
 results = await connection.execute(`
     SELECT 
-      employees.id,
-      employees.first_name, 
-      employees.last_name, 
-      managers.first_name as manager_first_name,
-      roles.title,
-      departments.name as department,
-      roles.salary
-    FROM 
-      employees 
-    LEFT JOIN 
-      departments 
-    ON 
-      employees.department_id = departments.id
-    LEFT JOIN
-      roles
-    ON 
-      employees.role_id = roles.id
-    JOIN
-      employees as managers
-    ON
-      employees.manager_id = managers.id
+  employees.id,
+  employees.first_name, 
+  employees.last_name, 
+  managers.first_name as manager_first_name,
+  roles.title,
+  departments.name as department,
+  roles.salary
+FROM 
+  employees 
+LEFT JOIN 
+  departments 
+ON 
+  employees.department_id = departments.id
+LEFT JOIN
+  roles
+ON 
+  employees.role_id = roles.id
+JOIN
+  employees as managers
+ON
+  employees.manager_id = managers.id
     `);
     console.table(results[0]);
     break;
@@ -118,8 +99,8 @@ results = await connection.execute(`
             }
           ]);
           // insert department into the table
-          await connection.execute(`INSERT INTO departments (name) VALUES (?)`, [name]);
-          console.log(`Department ${name} added`);
+          await connection.execute(`INSERT INTO departments (name) VALUES (?)`, [name]);console.log(`Department ${name} added`);
+          updateSeed({name}, 'department');
           break;
         case 'Add a role':
           // prompt user for role details
@@ -143,6 +124,7 @@ results = await connection.execute(`
           // insert role into the table
           await connection.execute('INSERT INTO roles (title, salary, department_id) VALUES (?, ?, ?)', [title, salary, department_id]);
           console.log(`Role ${title} added`);
+          updateSeed({title, salary, department_id}, 'role');
           break;
         case 'Add an employee':
           // prompt user for employee details
@@ -171,60 +153,18 @@ results = await connection.execute(`
           // insert employee into the table
           await connection.execute('INSERT INTO employees (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)', [first_name, last_name, role_id, manager_id]);
           console.log(`Employee ${first_name} ${last_name} added`);
+          updateSeed({first_name, last_name, role_id, manager_id}, 'employee');
           break;
+         
         case 'Update an employee role':
-          // prompt user for employee id and new role id
-          const { employee_id_upd, new_role_id } = await inquirer.prompt([
-            {
-              type: 'input',
-              name: 'employee_id_upd',
-              message: 'Enter the employee id:'
-            },
-            {
-              type: 'input',
-              name: 'new_role_id',
-              message: 'Enter the new role id:'
-            }
-          ]);
-          // update the employee's role in the employees table
-          await connection.execute('UPDATE employees SET role_id = ? WHERE id = ?', [new_role_id, employee_id_upd]);
-          console.log(`Employee ${employee_id_upd} role updated to ${new_role_id}`);
+          // code for updating employee role
           break;
-          case 'Assign an employee to a department':
-          // Prompt user for employee id and department id
-          const { employee_id, department_id_assign } = await inquirer.prompt([
-            {
-              type: 'input',
-              name: 'employee_id',
-              message: 'Enter the employee id:'
-            },
-            {
-              type: 'input',
-              name: 'department_id_assign',
-              message: 'Enter the department id:'
-            }
-          ]);
-          // check if employee_id and department_id_assign are valid
-          const [employeeExist] = await connection.execute('SELECT * FROM employees WHERE id = ?', [employee_id]);
-          const [departmentExist] = await connection.execute('SELECT * FROM departments WHERE id = ?', [department_id_assign]);
-
-          if (employeeExist.length === 0) {
-            console.log('Invalid employee id');
-          } else if (departmentExist.length === 0) {
-            console.log('Invalid department id');
-          } else {
-            // update the employee's department in the employees table
-            await connection.execute('UPDATE employees SET department_id = ? WHERE id = ?', [department_id_assign, employee_id]);
-            console.log(`Employee ${employee_id} assigned to department ${department_id_assign}`);
-          }
-           break;
-        case 'Exit':
-          exit = true;
-          console.log('Exiting...');
+        case 'Assign an employee to a department':
+          // code for assigning employee to a department
           break;
       }
     } catch (error) {
-      console.log(error);
+      console.log('Error:', error);
     }
   }
 

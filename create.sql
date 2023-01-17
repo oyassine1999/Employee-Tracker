@@ -28,4 +28,3 @@ CREATE TABLE employees (
     FOREIGN KEY (manager_id) REFERENCES employees(id),
     FOREIGN KEY (department_id) REFERENCES departments(id)
 );
-source ./seed.sql;
