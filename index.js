@@ -76,10 +76,10 @@ async function crudOperation(option, connection) {
       query = 'INSERT INTO roles (title, salary, department_id) VALUES (?, ?, ?)';
       break;
     case 'Update an employee role':
-      // similar code
+      
       break;
     case 'Assign an employee to a department':
-      // similar code
+    
       break;
     default:
       console.log('Invalid option selected');
