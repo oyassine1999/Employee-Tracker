@@ -22,7 +22,7 @@ async function main() {
     host: 'localhost',
     user: 'root',
     password: 'password',
-    database: 'test'
+    database: 'employee_tracker'
   });
 
   let exit = false;
