@@ -1,5 +1,4 @@
 import inquirer from 'inquirer';
-import consoleTable from 'console.table';
 import mysql2 from 'mysql2/promise';
 import figlet from 'figlet';
 import updateSeed from './Assets/updateSeed.js';
@@ -14,7 +13,81 @@ figlet('Employee Tracker', function(err, data) {
     console.log(data)
 });
 
-async function main() {
+async function crudOperation(option, connection) {
+  let query;
+  switch (option) {
+    case 'View all employees':
+      query = `SELECT 
+    employees.id,
+    employees.first_name, 
+    employees.last_name, 
+    managers.first_name as manager_first_name,
+    roles.title,
+    departments.name as department,
+    roles.salary
+  FROM 
+    employees 
+  LEFT JOIN 
+    departments 
+  ON 
+    employees.department_id = departments.id
+  LEFT JOIN
+    roles
+  ON 
+    employees.role_id = roles.id
+  JOIN
+    employees as managers
+  ON
+    employees.manager_id = managers.id`;
+      break;
+    case 'View all roles':
+      query = 'SELECT * FROM roles';
+      break;
+    case 'View all departments':
+      query = 'SELECT * FROM departments';
+      break;
+    case 'Add a department':
+      const { name } = await inquirer.prompt([{
+        type: 'input',
+        name: 'name',
+        message: 'Enter the department name:'
+      }]);
+      query = `INSERT INTO departments (name) VALUES (?)`;
+      updateSeed({name}, 'department');
+      break;
+    case 'Add a role':
+      const { title, salary, department_id } = await inquirer.prompt([
+        {
+          type: 'input',
+          name: 'title',
+          message: 'Enter the role title:'
+        },
+        {
+          type: 'input',
+          name: 'salary',
+          message: 'Enter the role salary:'
+        },
+        {
+          type: 'input',
+          name: 'department_id',
+          message: 'Enter the department id:'
+        }
+      ]);
+      query = 'INSERT INTO roles (title, salary, department_id) VALUES (?, ?, ?)';
+      break;
+    case 'Update an employee role':
+      // similar code
+      break;
+    case 'Assign an employee to a department':
+      // similar code
+      break;
+    default:
+      console.log('Invalid option selected');
+      return;
+  }
+  const [results] = await connection.execute(query);
+  console.table(results);
+}async function main() {
   // Create a connection
   const connection = await mysql2.createConnection({
     host: 'localhost',
@@ -22,7 +95,7 @@ async function main() {
     password: 'password',
     database: 'employee_tracker'
   });
-
+  
   let exit = false;
   while (!exit) {
     try {
@@ -52,124 +125,11 @@ async function main() {
       }
 
       // Execute different query based on the option chosen
-      let results;
-      switch (option) {
-        case 'View all employees':
-        // get a list of all department names
-        const [departments] = await connection.execute(`SELECT name FROM departments`);
-        const departmentChoices = departments.map(department => department.name);
-        // prompt user to select a department from the list
-        const { department_name } = await inquirer.prompt([
-            {
-              type: 'list',
-              name: 'department_name',
-              message: 'Select a department:',
-              choices: departmentChoices
-            }
-        ]);
-
-        // execute the query with the selected department name
-        const [rows, fields] = await connection.execute(
-          `SELECT e.first_name, e.last_name, r.title, d.name, r.salary
-          FROM employees e
-          JOIN roles r ON e.role_id = r.id
-          JOIN departments d ON r.department_id = d.id
-          WHERE d.name = ?
-          ORDER BY r.salary DESC;`,
-          [department_name]
-        );
-
-        console.table(rows);
-        break;
-        case 'View all roles':
-          results = await connection.execute('SELECT * FROM roles');
-          console.table(results[0]);
-          break;
-        case 'View all departments':
-          results = await connection.execute('SELECT * FROM departments');
-          console.table(results[0]);
-          break;
-        case 'Add a department':
-          // prompt user for department name
-          const { name } = await inquirer.prompt([
-            {
-              type: 'input',
-              name: 'name',
-              message: 'Enter the department name:'
-            }
-          ]);
-          // insert department into the table
-          await connection.execute(`INSERT INTO departments (name) VALUES (?)`, [name]);console.log(`Department ${name} added`);
-          updateSeed({name}, 'department');
-          break;
-        case 'Add a role':
-          // prompt user for role details
-          const { title, salary, department_id } = await inquirer.prompt([
-            {
-              type: 'input',
-              name: 'title',
-              message: 'Enter the role title:'
-            },
-            {
-              type: 'input',
-              name: 'salary',
-              message: 'Enter the role salary:'
-            },
-            {
-              type: 'input',
-              name: 'department_id',
-              message: 'Enter the department id:'
-            }
-          ]);
-          // insert role into the table
-          await connection.execute('INSERT INTO roles (title, salary, department_id) VALUES (?, ?, ?)', [title, salary, department_id]);
-          console.log(`Role ${title} added`);
-          updateSeed({title, salary, department_id}, 'role');
-          break;
-        case 'Add an employee':
-          // prompt user for employee details
-          const { first_name, last_name, role_id, manager_id } = await inquirer.prompt([
-            {
-              type: 'input',
-              name: 'first_name',
-              message: 'Enter the employee first name:'
-            },
-            {
-              type: 'input',
-              name: 'last_name',
-              message: 'Enter the employee last name:'
-            },
-            {
-              type: 'input',
-              name: 'role_id',
-              message: 'Enter the employee role id:'
-            },
-            {
-              type: 'input',
-              name: 'manager_id',
-              message: 'Enter the employee manager id:'
-            }
-          ]);
-          // insert employee into the table
-          await connection.execute('INSERT INTO employees (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)', [first_name, last_name, role_id, manager_id]);
-          console.log(`Employee ${first_name} ${last_name} added`);
-          updateSeed({first_name, last_name, role_id, manager_id}, 'employee');
-          break;
-         
-        case 'Update an employee role':
-          // code for updating employee role
-          break;
-        case 'Assign an employee to a department':
-          // code for assigning employee to a department
-          break;
-      }
-    } catch (error) {
-      console.log('Error:', error);
+      await crudOperation(option, connection);
+    } catch (err) {
+      console.log(err);
     }
   }
-
-  // Close the connection
-  connection.end();
 }
 
 main();

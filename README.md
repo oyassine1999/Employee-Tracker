@@ -17,7 +17,15 @@ it an aplication that saves eployes inmformation with in the company
 
 ## Installation
 
-simply open folder and use cmd and type npm then type "node index.js".
+First, make sure you have Node.js and npm (Node Package Manager) installed on your machine.
+
+Next, clone the repository from GitHub to your local machine.
+
+Open a command prompt or terminal window and navigate to the root directory of the application.
+
+Run the command "npm install" to download and install all of the required packages listed in the package.json file. This will install inquirer, mysql2, figlet, and any other dependencies that the script needs to run.
+
+Once all the packages are installed, you can run the script by executing the command "node index.js" or "npm start" if start script is defined in package.json file.
 
 ## Usage
 
