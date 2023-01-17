@@ -17,14 +17,31 @@ figlet('Employee Tracker', function(err, data) {
 
 
 async function main() {
-  // Create a connection
-  const connection = await mysql2.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: 'password',
-    database: 'employee_tracker'
-  });
-
+  let connection;
+  try {
+    connection = await mysql2.createConnection({
+      host: 'localhost',
+      user: 'root',
+      password: 'password',
+    });
+    // Check if the 'employee_tracker' database exists
+    const [results] = await connection.execute("SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = 'employee_tracker'");
+    if (!results.length) {
+      // If the database doesn't exist, create it
+      await connection.execute('CREATE DATABASE employee_tracker');
+      console.log('Database employee_tracker created');
+    }
+    // Connect to the 'employee_tracker' database
+    connection = await mysql2.createConnection({
+      host: 'localhost',
+      user: 'root',
+      password: 'password',
+      database: 'employee_tracker'
+    });
+  } catch (error) {
+    console.log("Error: ", error);
+    return;
+  }
   let exit = false;
   while (!exit) {
     try {

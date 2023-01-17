@@ -1,3 +1,6 @@
+CREATE DATABASE IF NOT EXISTS employee_tracker;
+USE employee_tracker;
+
 -- Create the departments table
 CREATE TABLE departments (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -25,3 +28,4 @@ CREATE TABLE employees (
     FOREIGN KEY (manager_id) REFERENCES employees(id),
     FOREIGN KEY (department_id) REFERENCES departments(id)
 );
+source ./seed.sql;
