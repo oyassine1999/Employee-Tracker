@@ -55,32 +55,32 @@ async function main() {
       let results;
       switch (option) {
         case 'View all employees':
-results = await connection.execute(`
-    SELECT 
-  employees.id,
-  employees.first_name, 
-  employees.last_name, 
-  managers.first_name as manager_first_name,
-  roles.title,
-  departments.name as department,
-  roles.salary
-FROM 
-  employees 
-LEFT JOIN 
-  departments 
-ON 
-  employees.department_id = departments.id
-LEFT JOIN
-  roles
-ON 
-  employees.role_id = roles.id
-JOIN
-  employees as managers
-ON
-  employees.manager_id = managers.id
-    `);
-    console.table(results[0]);
-    break;
+        // get a list of all department names
+        const [departments] = await connection.execute(`SELECT name FROM departments`);
+        const departmentChoices = departments.map(department => department.name);
+        // prompt user to select a department from the list
+        const { department_name } = await inquirer.prompt([
+            {
+              type: 'list',
+              name: 'department_name',
+              message: 'Select a department:',
+              choices: departmentChoices
+            }
+        ]);
+
+        // execute the query with the selected department name
+        const [rows, fields] = await connection.execute(
+          `SELECT e.first_name, e.last_name, r.title, d.name, r.salary
+          FROM employees e
+          JOIN roles r ON e.role_id = r.id
+          JOIN departments d ON r.department_id = d.id
+          WHERE d.name = ?
+          ORDER BY r.salary DESC;`,
+          [department_name]
+        );
+
+        console.table(rows);
+        break;
         case 'View all roles':
           results = await connection.execute('SELECT * FROM roles');
           console.table(results[0]);
